@@ -75,6 +75,10 @@ verify() {
     verify_fzf
 }
 
+font() {
+    setfont ter-v18b
+}
+
 selection() {
     printf '%b\n' "$options" | fzf --prompt "$prompt"
 }
@@ -171,7 +175,50 @@ user() {
     done
 }
 
+verify
+font
 logo
 user
 disk
 region
+clear
+
+printf "
+==========================================
+            Formatting Disk
+==========================================\n"
+
+sgdisk -Z "$DISK"
+sgdisk -a 2048 -o "$DISK"
+
+sgdisk -n 1::+1G --typecode=1:ef00 --change-name=1:'EFI System' "$DISK"
+sgdisk -n 2::-0 --typecode=2:8300 --change-name=2:'Linux Root' "$DISK"
+
+partprobe "$DISK"
+
+printf "
+==========================================
+           Creating Filesystem
+==========================================\n"
+
+if [[ "$DISK" =~ "nvme" ]]; then
+    part1=${DISK}p1
+    part2=${DISK}p2
+else
+    part1=${DISK}1
+    part2=${DISK}2
+fi
+
+mkfs.fat -F 32 "$part1"
+mkfs.ext4 "$part2"
+
+mount "$part2" /mnt
+mount --mkdir "$part1" /mnt/boot
+
+printf "
+==========================================
+          Installing Base System
+==========================================\n"
+
+pacstrap -K /mnt base base-devel linux-lts linux-firmware
+genfstab -U /mnt >> /mnt/etc/fstab
