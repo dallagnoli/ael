@@ -225,7 +225,7 @@ printf "
 pacstrap -K /mnt base base-devel linux-lts linux-firmware
 genfstab -U /mnt >> /mnt/etc/fstab
 
-arch-chroot /mnt <<EOF
+arch-chroot /mnt /bin/bash <<EOF
 
 printf "
 ==========================================
@@ -256,11 +256,13 @@ printf "
 
 sed -i "s/^#${LOCALE_LONG}/${LOCALE_LONG}/" /etc/locale.gen
 locale-gen
-localectl set-locale LANG="$LOCALE"
+localectl set-locale LANG="${LOCALE}"
 
-timedatectl set-timezone "$TIMEZONE"
+timedatectl set-timezone "${TIMEZONE}"
 timedatectl set-ntp true
 
-printf "KEYMAP=%s\n" "$KEYMAP" > /etc/vconsole.conf
-printf "Section \"InputClass\"\n\tIdentifier \"system-keyboard\"\n\tMatchIsKeyboard \"on\"\n\tOption \"XkbLayout\" \"%s\"\nEndSection\n" "$KEYMAP" > /etc/X11/xorg.conf.d/00-keyboard.conf
+mkdir -p /etc/X11/xorg.conf.d
+printf "KEYMAP=%s\n" "${KEYMAP}" > /etc/vconsole.conf
+printf "Section \"InputClass\"\n\tIdentifier \"system-keyboard\"\n\tMatchIsKeyboard \"on\"\n\tOption \"XkbLayout\" \"%s\"\nEndSection\n" "${KEYMAP}" > /etc/X11/xorg.conf.d/00-keyboard.conf
 
+EOF
