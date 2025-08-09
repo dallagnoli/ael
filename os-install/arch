@@ -235,18 +235,17 @@ printf "
 pacman -S --noconfirm --needed networkmanager 
 systemctl enable NetworkManager
 
-nc=10
+nc=$(grep -c ^"cpu cores" /proc/cpuinfo)
 printf "
 ==========================================
    Optimizing MAKEFLAGS and COMPRESSION
      settings for your %s-core system
 ==========================================\n" "$nc"
 
-TOTAL_MEM=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
-
-if [ "$TOTAL_MEM" -gt 8000000 ]; then
-    sed -i "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j$nc\"/" /etc/makepkg.conf
-    sed -i "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -T $nc -z -)/" /etc/makepkg.conf
+TOTAL_MEM=$(cat /proc/meminfo | grep -i 'memtotal' | grep -o '[[:digit:]]*')
+if [ "$TOTAL_MEM" -gt "8000000" ]; then
+    sed -i "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j$nc\"/g" /etc/makepkg.conf
+    sed -i "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -T $nc -z -)/g" /etc/makepkg.conf
 fi
 
 printf "
