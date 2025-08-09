@@ -291,16 +291,6 @@ printf "
            Bootloader Setup
 ==========================================\n"
 
-ROOT=$(lsblk -dno UUID "$part2")
-
-bootctl install
-printf "default @saved\ntimeout 0\nconsole-mode max\neditor no\n" > /boot/loader/loader.conf
-
-if [ "$MICROCODE" = "Intel" ]; then
-    printf "title Arch (LTS)\nlinux /vmlinuz-linux-lts\ninitrd /intel-ucode.img\ninitrd /initramfs-linux-lts.img\noptions root=UUID=%s rw\n" "$ROOT" > /boot/loader/entries/lts.conf
-elif [ "$MICROCODE" = "AMD" ]; then
-    printf "title Arch (LTS)\nlinux /vmlinuz-linux-lts\ninitrd /amd-ucode.img\ninitrd /initramfs-linux-lts.img\noptions root=UUID=%s rw\n" "$ROOT" > /boot/loader/entries/lts.conf
-else
-    printf "title Arch (LTS)\nlinux /vmlinuz-linux-lts\ninitrd /initramfs-linux-lts.img\noptions root=UUID=%s rw\n" "$ROOT" > /boot/loader/entries/lts.conf
-fi
-EOF
+pacman -S --noconfirm --needed grub efibootmgr
+grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=AEL
+grub-mkconfig -o /boot/grub/grub.cfg
