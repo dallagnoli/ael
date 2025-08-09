@@ -80,7 +80,7 @@ font() {
 }
 
 selection() {
-    printf '%b\n' "$options" | fzf --prompt "$prompt"
+    printf "%b\n" "$options" | fzf --prompt "$prompt"
 }
 
 disk() {
@@ -109,6 +109,8 @@ region() {
             LOCALE=$(selection)
             ;;
     esac
+
+    LOCALE_LONG="${LOCALE} UTF-8"
 
     options=$(awk '/^[^#]/ { print $3 }' /usr/share/zoneinfo/zone.tab)
     prompt="Select your timezone: "
@@ -201,7 +203,7 @@ printf "
            Creating Filesystem
 ==========================================\n"
 
-if [[ "$DISK" =~ "nvme" ]]; then
+if [ "$DISK" =~ "nvme" ]; then
     part1=${DISK}p1
     part2=${DISK}p2
 else
@@ -222,3 +224,43 @@ printf "
 
 pacstrap -K /mnt base base-devel linux-lts linux-firmware
 genfstab -U /mnt >> /mnt/etc/fstab
+
+arch-chroot /mnt <<EOF
+
+printf "
+==========================================
+              Network Setup
+==========================================\n"
+
+pacman -S --noconfirm --needed networkmanager 
+systemctl enable NetworkManager
+
+nc=$(grep -c ^cpu\ cores /proc/cpuinfo)
+printf "
+==========================================
+   Optimizing MAKEFLAGS and COMPRESSION
+     settings for your %s-core system
+==========================================\n" "$nc"
+
+TOTAL_MEM=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+
+if [ "$TOTAL_MEM" -gt 8000000 ]; then
+    sed -i "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j$nc\"/" /etc/makepkg.conf
+    sed -i "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -T $nc -z -)/" /etc/makepkg.conf
+fi
+
+printf "
+==========================================
+            Region Settings
+==========================================\n"
+
+sed -i "s/^#${LOCALE_LONG}/${LOCALE_LONG}/" /etc/locale.gen
+locale-gen
+localectl set-locale LANG="$LOCALE"
+
+timedatectl set-timezone "$TIMEZONE"
+timedatectl set-ntp true
+
+printf "KEYMAP=%s\n" "$KEYMAP" > /etc/vconsole.conf
+printf "Section \"InputClass\"\n\tIdentifier \"system-keyboard\"\n\tMatchIsKeyboard \"on\"\n\tOption \"XkbLayout\" \"%s\"\nEndSection\n" "$KEYMAP" > /etc/X11/xorg.conf.d/00-keyboard.conf
+
