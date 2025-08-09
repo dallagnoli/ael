@@ -90,8 +90,8 @@ disk() {
 region() {
     echo "nameserver 1.1.1.1" > /etc/resolv.conf
 
-    TIMEZONE=$(curl -fs https://ipapi.co/timezone || echo "UTC")
-    COUNTRY=$(curl -fs https://ipapi.co/country_name || echo "United States")
+    TIMEZONE=$(curl -fs https://ipapi.co/timezone 2>/dev/null || TIMEZONE=$(awk '/^[^#]/ { print $3 }' /usr/share/zoneinfo/zone.tab | fzf --prompt="Select your timezone: ") || echo "UTC" )
+    COUNTRY=$(curl -fs https://ipapi.co/country_name 2>/dev/null || COUNTRY=$(curl -fs http://bin.christitus.com/raw/dalopenori 2>/dev/null | fzf --prompt="Select your country: ") || echo "United States" )
 
     case "$COUNTRY" in
         "Brazil")
@@ -112,7 +112,7 @@ region() {
     KEYMAP=$(selection)
 
     printf "\nFetching fastest mirrors for %s...\n" "$COUNTRY"
-    reflector --country "$COUNTRY" --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+    reflector --country "$COUNTRY" --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist > /dev/null 2>&1
 }
 
 user() {
