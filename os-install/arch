@@ -223,7 +223,6 @@ printf "
 ==========================================\n"
 
 pacstrap -K /mnt base base-devel linux-lts linux-firmware
-cp /etc/pacman.d/mirrorlist /mnt/etc/pacman.d/mirrorlist
 genfstab -U /mnt >> /mnt/etc/fstab
 
 arch-chroot /mnt /bin/bash <<EOF
@@ -250,7 +249,7 @@ sed -i "s/^#${LOCALE_LONG}/${LOCALE_LONG}/" /etc/locale.gen
 locale-gen
 printf "LANG=%s\n" "${LOCALE}" > /etc/locale.conf
 
-timedatectl set-timezone "${TIMEZONE}"
+timedatectl set-timezone "$TIMEZONE"
 timedatectl set-ntp true
 
 mkdir -p /etc/X11/xorg.conf.d
@@ -263,15 +262,9 @@ printf "
 ==========================================\n"
 
 if grep -q "GenuineIntel" /proc/cpuinfo; then
-    printf "Installing Intel microcode\n"
     pacman -S --noconfirm --needed intel-ucode
-    MICROCODE="Intel"
 elif grep -q "AuthenticAMD" /proc/cpuinfo; then
-    printf "Installing AMD microcode\n"
     pacman -S --noconfirm --needed amd-ucode
-    MICROCODE="AMD"
-else
-    printf "Unable to determine CPU vendor. Skipping microcode installation.\n"
 fi
 
 printf "
@@ -282,8 +275,6 @@ printf "
 useradd -m -G wheel -s /bin/bash "$USERNAME"
 printf '%s:%s\n' "$USERNAME" "$PASSWORD" | chpasswd
 printf '%s\n' "$HOSTNAME" > /etc/hostname
-
-pacman -S --noconfirm --needed sudo
 sed -i 's/^# *%wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
 
 printf "
