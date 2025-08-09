@@ -235,7 +235,7 @@ printf "
 pacman -S --noconfirm --needed networkmanager 
 systemctl enable NetworkManager
 
-nc=$(nproc)
+nc=10
 printf "
 ==========================================
    Optimizing MAKEFLAGS and COMPRESSION
