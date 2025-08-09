@@ -235,7 +235,7 @@ printf "
 pacman -S --noconfirm --needed networkmanager 
 systemctl enable NetworkManager
 
-nc=$(grep -c ^cpu\ cores /proc/cpuinfo)
+nc=$(grep -c ^"cpu cores" /proc/cpuinfo)
 printf "
 ==========================================
    Optimizing MAKEFLAGS and COMPRESSION
