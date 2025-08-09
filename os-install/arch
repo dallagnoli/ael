@@ -285,3 +285,6 @@ printf "
 pacman -S --noconfirm --needed grub efibootmgr
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=AEL
 grub-mkconfig -o /boot/grub/grub.cfg
+
+systemctl enable systemd-timesyncd.service
+EOF
