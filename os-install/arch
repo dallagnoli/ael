@@ -88,14 +88,10 @@ disk() {
 }
 
 region() {
-    rm -f /etc/resolv.conf
-    printf "nameserver 1.1.1.1\n" > /etc/resolv.conf
+    echo "nameserver 1.1.1.1" > /etc/resolv.conf
 
-    TIMEZONE=$(curl -s https://ipapi.co/timezone)
-    [ -z "$TIMEZONE" ] && TIMEZONE="UTC"
-
-    COUNTRY=$(curl -s https://ipapi.co/country_name)
-    [ -z "$COUNTRY" ] && COUNTRY="United States"
+    TIMEZONE=$(curl -fs https://ipapi.co/timezone || echo "UTC")
+    COUNTRY=$(curl -fs https://ipapi.co/country_name || echo "United States")
 
     case "$COUNTRY" in
         "Brazil")
@@ -117,7 +113,7 @@ region() {
 
     printf "\nFetching fastest mirrors for %s...\n" "$COUNTRY"
     reflector --country "$COUNTRY" --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
-}
+}'
 
 user() {
     while :; do 
