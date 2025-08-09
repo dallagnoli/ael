@@ -80,7 +80,7 @@ font() {
 }
 
 selection() {
-    printf "%b\n" "$options" | fzf --prompt "$prompt"
+    printf '%b\n' "$options" | fzf --prompt "$prompt"
 }
 
 disk() {
@@ -257,4 +257,50 @@ mkdir -p /etc/X11/xorg.conf.d
 printf "KEYMAP=%s\n" "${KEYMAP}" > /etc/vconsole.conf
 printf "Section \"InputClass\"\n\tIdentifier \"system-keyboard\"\n\tMatchIsKeyboard \"on\"\n\tOption \"XkbLayout\" \"%s\"\nEndSection\n" "${KEYMAP}" > /etc/X11/xorg.conf.d/00-keyboard.conf
 
+printf "
+==========================================
+            Microcode Install
+==========================================\n"
+
+if grep -q "GenuineIntel" /proc/cpuinfo; then
+    printf "Installing Intel microcode\n"
+    pacman -S --noconfirm --needed intel-ucode
+    MICROCODE="Intel"
+elif grep -q "AuthenticAMD" /proc/cpuinfo; then
+    printf "Installing AMD microcode\n"
+    pacman -S --noconfirm --needed amd-ucode
+    MICROCODE="AMD"
+else
+    printf "Unable to determine CPU vendor. Skipping microcode installation.\n"
+fi
+
+printf "
+==========================================
+           User Configuration
+==========================================\n"
+
+useradd -m -G wheel -s /bin/bash "$USERNAME"
+printf '%s:%s\n' "$USERNAME" "$PASSWORD" | chpasswd
+printf '%s\n' "$HOSTNAME" > /etc/hostname
+
+pacman -S --noconfirm --needed sudo
+sed -i 's/^# *%wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
+
+printf "
+==========================================
+           Bootloader Setup
+==========================================\n"
+
+ROOT=$(lsblk -dno UUID "$part2")
+
+bootctl install
+printf "default @saved\ntimeout 0\nconsole-mode max\neditor no\n" > /boot/loader/loader.conf
+
+if [ "$MICROCODE" = "Intel" ]; then
+    printf "title Arch (LTS)\nlinux /vmlinuz-linux-lts\ninitrd /intel-ucode.img\ninitrd /initramfs-linux-lts.img\noptions root=UUID=%s rw\n" "$ROOT" > /boot/loader/entries/lts.conf
+elif [ "$MICROCODE" = "AMD" ]; then
+    printf "title Arch (LTS)\nlinux /vmlinuz-linux-lts\ninitrd /amd-ucode.img\ninitrd /initramfs-linux-lts.img\noptions root=UUID=%s rw\n" "$ROOT" > /boot/loader/entries/lts.conf
+else
+    printf "title Arch (LTS)\nlinux /vmlinuz-linux-lts\ninitrd /initramfs-linux-lts.img\noptions root=UUID=%s rw\n" "$ROOT" > /boot/loader/entries/lts.conf
+fi
 EOF
