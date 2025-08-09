@@ -225,7 +225,7 @@ printf "
 pacstrap -K /mnt base base-devel linux-lts linux-firmware
 genfstab -U /mnt >> /mnt/etc/fstab
 
-arch-chroot /mnt /bin/bash <<EOF
+arch-chroot /mnt <<EOF
 
 printf "
 ==========================================
@@ -256,7 +256,7 @@ printf "
 
 sed -i "s/^#${LOCALE_LONG}/${LOCALE_LONG}/" /etc/locale.gen
 locale-gen
-localectl set-locale LANG="${LOCALE}"
+printf "LANG=%s\n" "${LOCALE}" > /etc/locale.conf
 
 timedatectl set-timezone "${TIMEZONE}"
 timedatectl set-ntp true
