@@ -225,7 +225,7 @@ printf "
 pacstrap -K /mnt base base-devel linux-lts linux-firmware
 genfstab -U /mnt >> /mnt/etc/fstab
 
-arch-chroot /mnt <<EOF
+arch-chroot /mnt /bin/bash <<EOF
 
 printf "
 ==========================================
@@ -244,7 +244,7 @@ printf "
 
 TOTAL_MEM=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
 
-if [ "$TOTAL_MEM" -gt 8000000 ]; then
+if [ -n "$TOTAL_MEM" ] && [ "$TOTAL_MEM" -gt 8000000 ]; then
     sed -i "s/#MAKEFLAGS=\"-j2\"/MAKEFLAGS=\"-j$nc\"/" /etc/makepkg.conf
     sed -i "s/COMPRESSXZ=(xz -c -z -)/COMPRESSXZ=(xz -c -T $nc -z -)/" /etc/makepkg.conf
 fi
