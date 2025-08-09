@@ -113,7 +113,7 @@ region() {
 
     printf "\nFetching fastest mirrors for %s...\n" "$COUNTRY"
     reflector --country "$COUNTRY" --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
-}'
+}
 
 user() {
     while :; do 
