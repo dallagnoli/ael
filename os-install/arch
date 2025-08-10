@@ -249,12 +249,11 @@ sed -i "s/^#${LOCALE_LONG}/${LOCALE_LONG}/" /etc/locale.gen
 locale-gen
 printf "LANG=%s\n" "${LOCALE}" > /etc/locale.conf
 
-timedatectl set-timezone "$TIMEZONE"
-timedatectl set-ntp true
+ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
+hwclock --systohc
+systemctl enable systemd-timesyncd.service
 
-mkdir -p /etc/X11/xorg.conf.d
 printf "KEYMAP=%s\n" "${KEYMAP}" > /etc/vconsole.conf
-printf "Section \"InputClass\"\n\tIdentifier \"system-keyboard\"\n\tMatchIsKeyboard \"on\"\n\tOption \"XkbLayout\" \"%s\"\nEndSection\n" "${KEYMAP}" > /etc/X11/xorg.conf.d/00-keyboard.conf
 
 printf "
 ==========================================
@@ -272,7 +271,7 @@ printf "
            User Configuration
 ==========================================\n"
 
-useradd -m -G wheel -s /bin/bash "$USERNAME"
+useradd -mG wheel "$USERNAME"
 printf '%s:%s\n' "$USERNAME" "$PASSWORD" | chpasswd
 printf '%s\n' "$HOSTNAME" > /etc/hostname
 sed -i 's/^# *%wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
@@ -285,6 +284,4 @@ printf "
 pacman -S --noconfirm --needed grub efibootmgr
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=AEL
 grub-mkconfig -o /boot/grub/grub.cfg
-
-systemctl enable systemd-timesyncd.service
 EOF
