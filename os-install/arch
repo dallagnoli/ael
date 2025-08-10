@@ -281,9 +281,9 @@ printf "
            User Configuration
 ==========================================\n"
 
-useradd -mG wheel "$USERNAME"
-printf '%s:%s\n' "$USERNAME" "$PASSWORD" | chpasswd
-printf '%s\n' "$HOSTNAME" > /etc/hostname
+useradd -m -G wheel -s /bin/bash "${USERNAME}"
+printf '%s:%s\n' "${USERNAME}" "${PASSWORD}" | chpasswd
+printf '%s\n' "${HOSTNAME}" > /etc/hostname
 sed -i 's/^# *%wheel ALL=(ALL:ALL) NOPASSWD: ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/' /etc/sudoers
 
 printf "
