@@ -119,6 +119,7 @@ region() {
     options=$(localectl list-keymaps)
     prompt="Select your layout: "
     KEYMAP=$(selection)
+    XKEYMAP=${KEYMAP//-/ }
 
     printf "\nFetching fastest mirrors for %s...\n" "$COUNTRY"
     reflector --country "$COUNTRY" --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
@@ -247,12 +248,13 @@ printf "
 
 sed -i "s/^#${LOCALE_LONG}/${LOCALE_LONG}/" /etc/locale.gen
 locale-gen
-printf "LANG=%s\n" "${LOCALE}" > /etc/locale.conf
+localectl set-locale LANG="${LOCALE}"
 
 ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
 hwclock --systohc
 
-printf "KEYMAP=%s\n" "${KEYMAP}" > /etc/vconsole.conf
+localectl set-keymap "${KEYMAP}"
+localectl set-x11-keymap "${XKEYMAP}"
 
 printf "
 ==========================================
