@@ -259,7 +259,7 @@ hwclock --systohc
 printf "KEYMAP=%s\n" "${KEYMAP}" > /etc/vconsole.conf
 
 mkdir -p /etc/X11/xorg.conf.d
-if [ -n "$KEYPT2" ]; then
+if [ -n "${KEYPT2}" ]; then
     printf 'Section "InputClass"\n\tIdentifier "system-keyboard"\n\tMatchIsKeyboard "on"\n\tOption "XkbLayout" "%s"\n\tOption "XkbModel" "%s"\nEndSection\n' "${KEYPT1}" "${KEYPT2}" > /etc/X11/xorg.conf.d/00-keyboard.conf
 else 
     printf 'Section "InputClass"\n\tIdentifier "system-keyboard"\n\tMatchIsKeyboard "on"\n\tOption "XkbLayout" "%s"\nEndSection\n' "${KEYPT1}" > /etc/X11/xorg.conf.d/00-keyboard.conf
