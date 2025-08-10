@@ -119,7 +119,10 @@ region() {
     options=$(localectl list-keymaps)
     prompt="Select your layout: "
     KEYMAP=$(selection)
-    XKEYMAP=${KEYMAP//-/ }
+    
+    IFS=-; set -- $KEYMAP
+    KEYPT1=$1
+    KEYPT2=$2
 
     printf "\nFetching fastest mirrors for %s...\n" "$COUNTRY"
     reflector --country "$COUNTRY" --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
@@ -243,18 +246,24 @@ systemctl enable NetworkManager
 
 printf "
 ==========================================
-            Region Settings
+              Locale Setup
 ==========================================\n"
 
 sed -i "s/^#${LOCALE_LONG}/${LOCALE_LONG}/" /etc/locale.gen
 locale-gen
-localectl set-locale LANG="${LOCALE}"
+printf "LANG=%s\n" "${LOCALE}" > /etc/locale.conf
 
-ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
+ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
 hwclock --systohc
 
-localectl set-keymap "${KEYMAP}"
-localectl set-x11-keymap "${XKEYMAP}"
+printf "KEYMAP=%s\n" "${KEYMAP}" > /etc/vconsole.conf
+
+mkdir -p /etc/X11/xorg.conf.d
+if [ -n "$KEYPT2" ]; then
+    printf 'Section "InputClass"\n\tIdentifier "system-keyboard"\n\tMatchIsKeyboard "on"\n\tOption "XkbLayout" "%s"\n\tOption "XkbModel" "%s"\nEndSection\n' "${KEYPT1}" "${KEYPT2}" > /etc/X11/xorg.conf.d/00-keyboard.conf
+else 
+    printf 'Section "InputClass"\n\tIdentifier "system-keyboard"\n\tMatchIsKeyboard "on"\n\tOption "XkbLayout" "%s"\nEndSection\n' "${KEYPT1}" > /etc/X11/xorg.conf.d/00-keyboard.conf
+fi
 
 printf "
 ==========================================
