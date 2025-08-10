@@ -252,6 +252,7 @@ printf "LANG=%s\n" "${LOCALE}" > /etc/locale.conf
 ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
 hwclock --systohc
 systemctl enable systemd-timesyncd.service
+timedatectl set-ntp true
 
 printf "KEYMAP=%s\n" "${KEYMAP}" > /etc/vconsole.conf
 
