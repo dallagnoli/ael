@@ -174,7 +174,7 @@ region() {
     KEYPT1=$1
     KEYPT2=$2
 
-    printf "\n%b\n" "${CYAN}Fetching fastest mirrors for %s...${RC}" "${COUNTRY}"
+    printf "\n%b%s%b\n" "${CYAN}" "Fetching fastest mirrors for ${COUNTRY}..." "${RC}"
     reflector --country "${COUNTRY}" --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 }
 
