@@ -1,58 +1,46 @@
 #!/bin/sh -e
 
-# AEL Installer for Arch Linux
+RC="\033[0m"
+RED="\033[31m"
+YELLOW="\033[33m"
+CYAN="\033[36m"
+GREEN="\033[32m"
 
-logo() {
-    printf "
-==========================================
-        __              __   __   _
-       /  )        /   /  ) /   _//
-      /--/ __  _. /_  /--/ /--  /  
-     /  (_/ (_(__/ /_/  (_(___,/___
-
-==========================================
-        Arch Linux AEL Installer
-==========================================\n"
-}
-
-verify_efi() {
-    if [ -f /sys/firmware/efi/fw_platform_size ]; then
-        EFI_BITS=$(cat /sys/firmware/efi/fw_platform_size)
-
-        if [ "$EFI_BITS" -eq 64 ]; then
-            BOOT="UEFI 64"
-        elif [ "$EFI_BITS" -eq 32 ]; then
-            BOOT="UEFI 32"
-        else
-            printf "ERROR: Unknown EFI platform size detected.\n" >&2
-            exit 1
-        fi
-
-    else
-        BOOT="BIOS"
-    fi
-}
-
-verify_root() {
-    if [ $(id -u) -ne 0 ]; then
-        printf "ERROR: This script must be run as root.\n" >&2
+iso_check() {
+    if [ ! -f /run/archiso/bootmnt/arch/x86_64/airootfs.sfs ]; then
+        printf "%b\n" "${RED}ArchAEL must be run from an Arch Linux live ISO environment.${RC}" >&2
         exit 1
     fi
 }
 
-verify_fzf() {
-    if ! command -v fzf >/dev/null 2>&1; then
-        pacman -Sy --noconfirm fzf >/dev/null 2>&1 || {
-            printf "ERROR: Could not install fzf. Check your ethernet connection.\n" >&2
+uefi_check() {
+    if [ -f /sys/firmware/efi/fw_platform_size ]; then
+        UEFI_BITNESS=$(cat /sys/firmware/efi/fw_platform_size)
+        case "${UEFI_BITNESS}" in
+        64)
+            ;;
+        *) 
+            printf "%b\n" "${RED}ArchAEL only supports UEFI 64-bit mode.${RC}" >&2
             exit 1
-        }
+            ;;
+        esac
+    else
+        printf "%b\n" "${RED}ArchAEL only supports UEFI 64-bit mode.${RC}" >&2
+        exit 1
     fi
 }
 
-verify_pacman() {
+root_check() {
+    if [ $(id -u) -ne 0 ]; then
+        printf "%b\n" "${RED}ArchAEL must be run as root.${RC}" >&2
+        exit 1
+    fi
+}
+
+pacman_check() {
     if [ -f /var/lib/pacman/db.lck ]; then
         if pgrep -x pacman >/dev/null 2>&1; then
-            printf "ERROR: Pacman is currently running. Close it before proceeding.\n" >&2
+            printf "%b\n" "${RED}An instance of pacman is running.${RC}" >&2
             exit 1
         else
             rm -f /var/lib/pacman/db.lck
@@ -60,19 +48,29 @@ verify_pacman() {
     fi
 }
 
-verify_iso() {
-    if [ ! -f /run/archiso/bootmnt/arch/x86_64/airootfs.sfs ]; then
-        printf "ERROR: This script must be run from an Arch Linux installation ISO.\n" >&2
+update_check() {
+    pacman -Syu --noconfirm >/dev/null 2>&1 || {
+        printf "%b\n" "${RED}Failed to update live system.${RC}" >&2
         exit 1
+    }
+}
+
+fzf_check() {
+    if ! command -v fzf >/dev/null 2>&1; then
+        pacman -S --noconfirm --needed fzf >/dev/null 2>&1 || {
+            printf "%b\n" "${RED}Failed to install fuzzy finder.${RC}" >&2
+            exit 1
+        }
     fi
 }
 
-verify() {
-    verify_iso
-    verify_efi
-    verify_root
-    verify_pacman
-    verify_fzf
+check_all() {
+    iso_check
+    uefi_check
+    root_check
+    pacman_check
+    update_check
+    fzf_check
 }
 
 font() {
@@ -80,7 +78,7 @@ font() {
 }
 
 selection() {
-    printf '%b\n' "$options" | fzf --prompt "$prompt"
+    printf "%b\n" "$options" | fzf --prompt "$prompt"
 }
 
 disk() {
@@ -181,9 +179,8 @@ user() {
     done
 }
 
-verify
+check_all
 font
-logo
 user
 disk
 region
