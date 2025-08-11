@@ -65,7 +65,7 @@ fzf_check() {
     fi
 }
 
-launch_stack() {
+launch() {
     iso_check
     uefi_check
     root_check
@@ -138,7 +138,7 @@ disk() {
     prompt="Select a disk: "
 
     selected=$(selection)
-    DISK=$(printf "%s" "${selected}" | cut -d' ' -f1)
+    DISK=$(printf "%s" "${selected}" | tr -s ' ' | cut -d' ' -f1)
 }
 
 region() {
@@ -146,7 +146,7 @@ region() {
     prompt="Select your country: "
     COUNTRY=$(selection)
 
-    case "$COUNTRY" in
+    case "${COUNTRY}" in
         "Brazil")
             LOCALE="pt_BR.UTF-8"
             ;;
@@ -170,15 +170,15 @@ region() {
     prompt="Select your layout: "
     KEYMAP=$(selection)
     
-    IFS=-; set -- $KEYMAP
+    IFS=-; set -- "${KEYMAP}"
     KEYPT1=$1
     KEYPT2=$2
 
-    printf "\nFetching fastest mirrors for %s...\n" "$COUNTRY"
-    reflector --country "$COUNTRY" --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+    printf "\n%b\n" "${CYAN}Fetching fastest mirrors for %s...${RC}" "${COUNTRY}"
+    reflector --country "${COUNTRY}" --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 }
 
-launch_stack
+launch
 clear
 userinfo
 disk
