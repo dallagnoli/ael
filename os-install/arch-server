@@ -18,6 +18,7 @@ uefi_check() {
         UEFI_BITNESS=$(cat /sys/firmware/efi/fw_platform_size)
         case "${UEFI_BITNESS}" in
         64)
+            # UEFI 64-bit: OK
             ;;
         *) 
             printf "%b\n" "${RED}ArchAEL only supports UEFI 64-bit mode.${RC}" >&2
@@ -38,6 +39,7 @@ root_check() {
 }
 
 pacman_check() {
+    # Remove database lock if pacman is not running
     if [ -f /var/lib/pacman/db.lck ]; then
         if pgrep -x pacman >/dev/null 2>&1; then
             printf "%b\n" "${RED}An instance of pacman is running.${RC}" >&2
@@ -46,11 +48,14 @@ pacman_check() {
             rm -f /var/lib/pacman/db.lck
         fi
     fi
-}
 
-keyring_update() {
+    # Ensure pacman keyring is initialized and populated
+    pacman-key --init >/dev/null 2>&1
+    pacman-key --populate archlinux >/dev/null 2>&1
+
+    # Update keyring to latest version
     pacman -Sy --noconfirm --needed archlinux-keyring >/dev/null 2>&1 || {
-        printf "%b\n" "${RED}Failed to update archlinux-keyring.${RC}" >&2
+        printf "%b\n" "${RED}Failed to update Arch Linux keyring.${RC}" >&2
         exit 1
     }
 }
@@ -64,12 +69,11 @@ fzf_check() {
     fi
 }
 
-check_all() {
+launch_functions() {
     iso_check
     uefi_check
     root_check
     pacman_check
-    keyring_update
     fzf_check
 }
 
@@ -179,7 +183,7 @@ user() {
     done
 }
 
-check_all
+launch_functions
 font
 user
 disk
