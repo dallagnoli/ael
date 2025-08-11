@@ -205,7 +205,7 @@ else
 fi
 
 mkfs.fat -F 32 "$part1"
-mkfs.ext4 "$part2"
+mkfs.ext4 -F "$part2"
 
 mount "$part2" /mnt
 mount --mkdir "$part1" /mnt/boot
