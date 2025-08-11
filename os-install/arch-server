@@ -48,9 +48,9 @@ pacman_check() {
     fi
 }
 
-update_check() {
-    pacman -Syu --noconfirm >/dev/null 2>&1 || {
-        printf "%b\n" "${RED}Failed to update live system.${RC}" >&2
+keyring_update() {
+    pacman -Sy --noconfirm --needed archlinux-keyring >/dev/null 2>&1 || {
+        printf "%b\n" "${RED}Failed to update archlinux-keyring.${RC}" >&2
         exit 1
     }
 }
@@ -69,7 +69,7 @@ check_all() {
     uefi_check
     root_check
     pacman_check
-    update_check
+    keyring_update
     fzf_check
 }
 
