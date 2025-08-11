@@ -46,14 +46,6 @@ pacman_check() {
             rm -f /var/lib/pacman/db.lck
         fi
     fi
-
-    pacman-key --init >/dev/null 2>&1
-    pacman-key --populate archlinux >/dev/null 2>&1
-
-    pacman -Sy --noconfirm --needed archlinux-keyring >/dev/null 2>&1 || {
-        printf "%b\n" "${RED}Failed to update Arch Linux keyring.${RC}" >&2
-        exit 1
-    }
 }
 
 fzf_check() {
