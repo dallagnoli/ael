@@ -171,8 +171,8 @@ region() {
     KEYMAP=$(selection)
     
     IFS=-; set -- "${KEYMAP}"
-    KEYPT1=$1
-    KEYPT2=$2
+    KEYSPT1=$1
+    KEYSPT2=$2
 
     printf "\n%b%s%b\n" "${CYAN}" "Fetching fastest mirrors for ${COUNTRY}..." "${RC}"
     reflector --country "${COUNTRY}" --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
@@ -255,10 +255,10 @@ hwclock --systohc
 printf "KEYMAP=%s\n" "${KEYMAP}" > /etc/vconsole.conf
 
 mkdir -p /etc/X11/xorg.conf.d
-if [ -n "${KEYPT2}" ]; then
-    printf 'Section "InputClass"\n\tIdentifier "system-keyboard"\n\tMatchIsKeyboard "on"\n\tOption "XkbLayout" "%s"\n\tOption "XkbModel" "%s"\nEndSection\n' "${KEYPT1}" "${KEYPT2}" > /etc/X11/xorg.conf.d/00-keyboard.conf
+if [ -n "${KEYSPT2}" ]; then
+    printf 'Section "InputClass"\n\tIdentifier "system-keyboard"\n\tMatchIsKeyboard "on"\n\tOption "XkbLayout" "%s"\n\tOption "XkbModel" "%s"\nEndSection\n' "${KEYSPT1}" "${KEYSPT2}" > /etc/X11/xorg.conf.d/00-keyboard.conf
 else 
-    printf 'Section "InputClass"\n\tIdentifier "system-keyboard"\n\tMatchIsKeyboard "on"\n\tOption "XkbLayout" "%s"\nEndSection\n' "${KEYPT1}" > /etc/X11/xorg.conf.d/00-keyboard.conf
+    printf 'Section "InputClass"\n\tIdentifier "system-keyboard"\n\tMatchIsKeyboard "on"\n\tOption "XkbLayout" "%s"\nEndSection\n' "${KEYSPT1}" > /etc/X11/xorg.conf.d/00-keyboard.conf
 fi
 
 printf "
