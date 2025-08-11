@@ -18,7 +18,6 @@ uefi_check() {
         UEFI_BITNESS=$(cat /sys/firmware/efi/fw_platform_size)
         case "${UEFI_BITNESS}" in
         64)
-            # UEFI 64-bit: OK
             ;;
         *) 
             printf "%b\n" "${RED}ArchAEL only supports UEFI 64-bit mode.${RC}" >&2
@@ -39,7 +38,6 @@ root_check() {
 }
 
 pacman_check() {
-    # Remove database lock if pacman is not running
     if [ -f /var/lib/pacman/db.lck ]; then
         if pgrep -x pacman >/dev/null 2>&1; then
             printf "%b\n" "${RED}An instance of pacman is running.${RC}" >&2
@@ -49,11 +47,9 @@ pacman_check() {
         fi
     fi
 
-    # Ensure pacman keyring is initialized and populated
     pacman-key --init >/dev/null 2>&1
     pacman-key --populate archlinux >/dev/null 2>&1
 
-    # Update keyring to latest version
     pacman -Sy --noconfirm --needed archlinux-keyring >/dev/null 2>&1 || {
         printf "%b\n" "${RED}Failed to update Arch Linux keyring.${RC}" >&2
         exit 1
@@ -69,20 +65,72 @@ fzf_check() {
     fi
 }
 
-launch_functions() {
+launch_stack() {
     iso_check
     uefi_check
     root_check
     pacman_check
     fzf_check
+    setfont ter-v18b
+    sed -i 's/^#\?ParallelDownloads = .*/ParallelDownloads = 10/' /etc/pacman.conf
+    sed -i 's/^#Color/Color\nILoveCandy/' /etc/pacman.conf
 }
 
-font() {
-    setfont ter-v18b
+userinfo() {
+    while :; do 
+        printf "\n%b " "${CYAN}Enter your username:${RC}"
+
+        read -r username_input
+        username_input=$(printf "%s" "${username_input}" | xargs)
+        username_raw=$(printf "%s" "${username_input}" | tr "[:upper:]" "[:lower:]")
+
+        if [ "${username_raw}" != "root" ] && printf "%s" "${username_raw}" | grep -Eq "^[a-z_][a-z0-9_-]{0,31}$"; then
+            USERNAME="${username_input}"
+            break
+        else
+            printf "%b\n" "${YELLOW}Invalid username. Try again.${RC}"
+        fi
+    done
+
+    while :; do
+        printf "\n%b " "${CYAN}Enter your password:${RC}"
+        stty -echo
+        read -r password_input1
+        stty echo
+
+        printf "\n%b " "${CYAN}Re-enter your password:${RC}"
+        stty -echo
+        read -r password_input2
+        stty echo
+
+        if [ "${password_input1}" != "${password_input2}" ]; then
+            printf "\n%b\n" "${YELLOW}Passwords don't match. Try again.${RC}"
+        elif [ "${password_input1}" = "${password_input2}" ] && [ -n "${password_input1}" ]; then
+            PASSWORD="${password_input1}"
+            break
+        else
+            printf "\n%b\n" "${YELLOW}Invalid password. Try again.${RC}"
+        fi
+    done
+
+    while :; do
+        printf "\n\n%b " "${CYAN}Name your machine:${RC}"
+
+        read -r hostname_input
+        hostname_input=$(printf "%s" "${hostname_input}" | xargs)
+        hostname_raw=$(printf "%s" "${hostname_input}" | tr "[:upper:]" "[:lower:]")
+
+        if printf "%s" "${hostname_raw}" | grep -Eq "^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$"; then
+            HOSTNAME="${hostname_input}"
+            break
+        else
+            printf "%b" "${YELLOW}Invalid hostname. Try again.${RC}"
+        fi
+    done
 }
 
 selection() {
-    printf "%b\n" "$options" | fzf --prompt "$prompt"
+    printf "%b\n" "${options}" | fzf --prompt "${prompt}"
 }
 
 disk() {
@@ -90,7 +138,7 @@ disk() {
     prompt="Select a disk: "
 
     selected=$(selection)
-    DISK=$(printf '%s' "$selected" | cut -d' ' -f1)
+    DISK=$(printf "%s" "${selected}" | cut -d' ' -f1)
 }
 
 region() {
@@ -130,62 +178,9 @@ region() {
     reflector --country "$COUNTRY" --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 }
 
-user() {
-    while :; do 
-        printf "\nEnter your username: " 
-
-        read -r username_input
-        username_input=$(printf '%s' "$username_input" | xargs)
-        username_raw=$(printf '%s' "$username_input" | tr '[:upper:]' '[:lower:]')
-
-        if [ "$username_raw" != "root" ] && printf '%s' "$username_raw" | grep -Eq '^[a-z_][a-z0-9_-]{0,31}$'; then
-            USERNAME="$username_input"
-            break
-        else
-            printf "Invalid username. Try again.\n"
-        fi
-    done
-
-    while :; do
-        printf "\nEnter your password: "
-        stty -echo
-        read -r password_input1
-        stty echo
-
-        printf "\nRe-enter your password: "
-        stty -echo
-        read -r password_input2
-        stty echo
-
-        if [ "$password_input1" != "$password_input2" ]; then
-            printf "\nPasswords don't match. Try again.\n"
-        elif [ "$password_input1" = "$password_input2" ] && [ -n "$password_input1" ]; then
-            PASSWORD="$password_input1"
-            break
-        else
-            printf "\nInvalid password. Try again.\n"
-        fi
-    done
-
-    while :; do
-        printf "\n\nName your machine: "
-
-        read -r hostname_input
-        hostname_input=$(printf '%s' "$hostname_input" | xargs)
-        hostname_raw=$(printf '%s' "$hostname_input" | tr '[:upper:]' '[:lower:]')
-
-        if printf '%s' "$hostname_raw" | grep -Eq '^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$'; then
-            HOSTNAME="$hostname_input"
-            break
-        else
-            printf "Invalid hostname. Try again."
-        fi
-    done
-}
-
-launch_functions
-font
-user
+launch_stack
+clear
+userinfo
 disk
 region
 clear
